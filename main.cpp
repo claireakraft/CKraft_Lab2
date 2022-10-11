@@ -10,8 +10,8 @@
 
 
 
-//DigitalOut led(LED1);
-//DigitalOut flash(LED_RED);
+DigitalOut ledg(LED3);
+DigitalOut ledb(LED4);
 
 #define SET (uint32_t *)0x50000508
 #define CLEAR (uint32_t *)0x5000050C
@@ -43,36 +43,32 @@ void flip(){
 
 
 void read_pressure(){
-    uint32_t PressureFlag = 0;
-    //setbit(DIR, ping);
    
     while(true){
         event_flags.wait_any(PRESSURE);
 
-            SERIAL.printf("reading pressure\r\n");
+        SERIAL.printf("reading pressure\r\n");
             
-            // actually turn on and off the LED
-            setbit(CLEAR, ping); // turning on
-            //thread_sleep_for(100);
-            setbit(SET, ping); // turning off
-            thread_sleep_for(500);
+        // actually turn on and off the LED
+        ledg = 0;
+        thread_sleep_for(500);
+        ledg = !ledg;
+        thread_sleep_for(500);
     }    
 }
 
 
 void read_temperature(){
-    uint32_t TemperatureFlag = 0;
     
-    //setbit(CLEAR, pinb);
     while(true){
         event_flags.wait_any(TEMPERATURE);
 
-            SERIAL.printf("reading temperature\r\n");
-            // actually turn on and off the LED
-            setbit(CLEAR, pinb); // turning on
-            //thread_sleep_for(100);
-            setbit(SET, pinb); // turning off
-            thread_sleep_for(500);
+        SERIAL.printf("reading temperature\r\n");
+        // actually turn on and off the LED
+        ledb = 0;
+        thread_sleep_for(500);
+        ledb = !ledb;
+        thread_sleep_for(500);
          
     }
 }
@@ -86,18 +82,11 @@ int main() {
     thread1.start(read_pressure);
     thread2.start(read_temperature);
 
-    setbit(DIR, ping);
-    setbit(DIR, pinb);
-    setbit(SET, pinb);
-
-
     flipper.attach(&flip, 3.0); // the address of the function to be attached (flip) and the interval (2 seconds)
     
-
     while (true) {
         SERIAL.printf("j is %i\r\n", j);
         thread_sleep_for(1000);
-
     }
     
 }
