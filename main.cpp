@@ -44,10 +44,10 @@ Thread thread1;
 Thread thread2;
 USBSerial SERIAL;
 
-I2C i2c(p31, p2);
-const int addr = 0x55;
+I2C i2c(p14, p15);
+//const int addr = 0x55;
 
-int j = 0;
+int j = 1;
 
 void flip(){
     
@@ -64,15 +64,17 @@ void flip(){
 int reading(const uint8_t add1, const uint8_t add2){
     char Radd = 0xEF;
     char Wadd = 0xEE;
-    char outp1[2];
-    i2c.write(Wadd, add1, 1);
-    i2c.read(Radd, outp1[0], 1);
+    char outp1[1], outp2[1];
 
-    i2c.write(Wadd, add2, 1);
-    i2c.read(Radd, outp1[1], 1);
+    outp1[0] = add1;
+    i2c.write(Wadd, outp1, 1, true);
+    i2c.read(Radd, outp1, 1, false);
 
-    return (outp1[0] << 8) | outp1[1];
+    outp2[0] = add2;
+    i2c.write(Wadd, outp2, 1, true);
+    i2c.read(Radd, outp2, 1, false);
 
+    return (outp1[0] << 8) | outp2[0];
 
 }
 
@@ -80,9 +82,7 @@ void read_pressure(){
    
     while(true){
         event_flags.wait_any(PRESSURE);
-
         //SERIAL.printf("reading pressure\r\n");
-            
         // actually turn on and off the LED
         ledg = 0;
         thread_sleep_for(500);
@@ -90,22 +90,31 @@ void read_pressure(){
         thread_sleep_for(500);
 
         // reading uncompensated pressure value 
-        i2c.write(0xF4, 0x2E, 1);
-        char output0[1];
-        char output1[1];
-        char output2[1];
-        i2c.write(Wadd, 0xF6, 1);
-        i2c.read(Radd, output0, 1);
+        int oss = 0;
+        char input1[1], input2[1], output0[1], output1[1], output2[1];
+        input1[0]= 0xF4;
+        input2[0]= 0x34 + (oss<<6);
+        i2c.write(Wadd, input1, 1, true);
+        i2c.write(Wadd, input2, 1, false);
 
-        i2c.write(Wadd, 0xF7, 1);
-        i2c.read(Radd, output1, 1);
+        thread_sleep_for(4.5);
 
-        i2c.write(Wadd, 0xF8, 1);
-        i2c.read(Radd, output2, 1);
+        output0[0] = 0xF6;
+        output1[0] = 0xF7;
+        output2[0] = 0xF8;
 
-        int32_t UP = ((output[0] << 16) + (output1[0] << 8) + output2[0]) >> 8;
+        i2c.write(Wadd, output0, 1, true);
+        i2c.read(Radd, output0, 1), false;
 
-        SERIAL.printf("pressure = %i", UP);
+        i2c.write(Wadd, output1, 1, true);
+        i2c.read(Radd, output1, 1, false);
+
+        i2c.write(Wadd, output2, 1, true);
+        i2c.read(Radd, output2, 1, false);
+
+        int32_t UP = ((output0[0] << 16) + (output1[0] << 8) + output2[0]) >> (8 - oss);
+
+        SERIAL.printf("pressure = %i \r\n", UP);
       
     }    
 }
@@ -122,26 +131,24 @@ void read_temperature(){
         thread_sleep_for(500);
         ledb = !ledb;
         thread_sleep_for(500);
+        char input3[1], input4[1], out1[1], out2[1];
 
-        char output1[1];
-        uint8_t Var1 = 0x2E;
-        uint8_t Var2 = 0xF4;
-        i2c.write(Var2, Var1, 1);
+        input3[0]= 0xF4;
+        input4[0]= 0x2E;
+        i2c.write(Wadd, input3, 1, true);
+        i2c.write(Wadd, input4, 1, false);
 
-        wait(4.5);
+        thread_sleep_for(4.5);
 
-        uint8_t Var3 = 0xF6;
-        char output3[1];
-        uint8_t Var4 = 0xF7;
-        char output4[1];
-        i2c.write(Wadd, VAR3, 1);
-        i2c.read(Radd, output3, 1);
+        out1[0] = 0xF6;
+        out2[0] = 0xF7;
+        i2c.write(Wadd, out1, 1, true);
+        i2c.read(Radd, out1, 1, false);
+        i2c.write(Wadd, out2, 1, true);
+        i2c.read(Radd, out2, 1, false);
 
-        i2c.write(Wadd, VAR4, 1);
-        i2c.read(Radd, output3, 1);
-
-        uint32_t UT = (output3[0] << 8) + output4[0];
-        SERIAL.printf("temp = %i", UT);
+        uint32_t UT = (out1[0] << 8) + out2[0];
+        SERIAL.printf("temp = %i \r\n", UT);
 
          
     }
@@ -164,11 +171,11 @@ int main() {
     out[0] = 0x00;
     i2c.write(Wadd, value, 1);
     i2c.read(Radd, out, 1);
-    if(out[0] = 0x55){
-        SERIAL.printf("RIGHT sensor");
+    if(out[0] == 0x55){
+        SERIAL.printf("RIGHT sensor\r\n");
     }
     else{
-        SERIAL.printf("WRONG sensor");
+        SERIAL.printf("WRONG sensor\r\n");
     }
         
     AC1 = reading(AC1_REG_MSB, AC1_REG);
