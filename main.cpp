@@ -1,4 +1,9 @@
-
+/*
+* Claire Kraft
+* OCT 16 2022
+* This program reads the temperature and the pressure from the BMP180 sensor
+* using I2C and ISRs
+*/
 
 
 #include "mbed.h"
