@@ -161,7 +161,7 @@ void read_pressure(){
         X2 = (-7357 *p) / pow(2,16);
         //SERIAL.printf("X2 = %i\r\n", X2);
         p = p + (X1 + X2 + 3791)/pow(2,4);
-        //SERIAL.printf("the pressure is %i Pa\r\n", p);
+        SERIAL.printf("the pressure is %i Pa\r\n", p);
     }    
 }
 
@@ -205,7 +205,7 @@ void read_temperature(){
         //SERIAL.printf("X1 = %i \r\n", X1); 
         //SERIAL.printf("X2 = %i \r\n", X2);     
         //SERIAL.printf("B5 = %i \r\n", B5);     
-        //SERIAL.printf("the temperature is = %i *0.1 C \r\n", T);              
+        SERIAL.printf("the temperature is = %i *0.1 C \r\n", T);              
     }
 } 
 
